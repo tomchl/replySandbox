@@ -69,6 +69,43 @@ func setHeadersAndBody(w http.ResponseWriter, req *http.Request) {
 	log.Printf("Headers and body are set")
 }
 
+func instanceList(w http.ResponseWriter, req *http.Request) {
+	log.Println("Received request on /api/v1/service/instance/list")
+
+	body := `{"Services": [{
+				"Id": "1",
+				"CompanyId": "1",
+				"Name": "DummyName",
+				"Definition": {
+					"Name": "DummyName",
+					"Version": "1",
+					"Description": "BlahBlah",
+					"CurrentState": "Running",
+					"DesiredState": "Running"
+				},
+				"User": "Dummy",
+				"Details": {
+					"Endpoints": []
+					}
+				}]}`
+	log.Printf("	Services returned: %s", body)
+	w.Write([]byte(body))
+}
+
+func listVisible(w http.ResponseWriter, req *http.Request) {
+	log.Println("Received request on /api/v1/service/definition/listVisible")
+
+	body := `{"ServicesDefinitions": [{
+				"Name": "DummyName",
+				"Version": "1",
+				"Description": "BlahBlah",
+				"CurrentState": "Running",
+				"DesiredState": "Running"
+			}]}`
+	log.Printf("	Services returned: %s", body)
+	w.Write([]byte(body))
+}
+
 func reflectRequest(w http.ResponseWriter, req *http.Request) {
 	log.Println("Request for reflection received")
 	for name, headers := range req.Header {
@@ -109,6 +146,9 @@ func main() {
 	http.HandleFunc("/setHeadersAndBody", setHeadersAndBody)
 	http.HandleFunc("/reflect", reflectRequest)
 	http.HandleFunc("/clear", clear)
+
+	http.HandleFunc("/bob/api/v1/service/instance/list", instanceList)
+	http.HandleFunc("/bob/api/v1/service/definition/listVisible", listVisible)
 
 	ch := make(chan error)
 	go func() {
