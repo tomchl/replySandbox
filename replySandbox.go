@@ -132,7 +132,7 @@ func clear(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	port := ":8079"
+	port := ":80"
 	if len(os.Args) >= 2 {
 		port = os.Args[1]
 	}
