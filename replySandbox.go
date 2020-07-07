@@ -92,10 +92,12 @@ func setStatusCode(w http.ResponseWriter, req *http.Request) {
 	}
 
 	parsedInt, err := strconv.Atoi(req.FormValue("statuscode"))
-	if err == nil {
+	if err == nil && (parsedInt > 200 && parsedInt < 500) {
 		codePerCompany[companyID] = parsedInt
+		log.Printf("		StatusCode for company %s : %d", companyID, codePerCompany[companyID])
+		return
 	}
-	log.Printf("		StatusCode for company %s : %d", companyID, codePerCompany[companyID])
+	log.Printf("		StatusCode for company %s not set - must be in range 200-500", companyID)
 }
 
 func setHeadersAndBody(w http.ResponseWriter, req *http.Request) {
