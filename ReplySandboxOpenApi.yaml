@@ -1,0 +1,186 @@
+openapi: 3.0.1
+info:
+  title: SaaS server mock
+  description: >-
+    For more details and full context regarding SaaS server mock
+    services, consult documentation at:
+    https://confluence.quadient.group/display/PROD/PRODaaS+cloud+proxy+mock
+  version: 14.4.202.0
+paths:
+  /:
+    get:
+      responses:
+        '200':
+          description: Default value is 200, but can be configured
+          headers:
+            configuredHeaders:
+              schema:
+                type: string
+              description: Default headers are just http required headers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  body:
+                    type: string
+                    description: whole body can be configured, default value is empty body
+
+    parameters:
+      - name: Bearer
+        in: header
+        description: At the moment, it is not required and used, company is enriched from the first url path (ex. sandboxurlport/101002/blah/halb -> 101002 is company id)
+        schema:
+          type: string
+
+  /setHeaders:
+    post:
+      parameters:
+        - name: CustomHeader1
+          in: header
+          description:  Any number of headers which will be then returned on root endpoint
+          schema:
+            type: string
+        - name: CustomHeader2
+          in: header
+          description:  Any number of headers which will be then returned on root endpoint
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+      description: Headers are stored per company, if present, CompanyId header will be used. This endpoint can be used for setting up the headers, which will be used on root get endpoint (also all the paths which are not confired as valid endpoints will return configured values). Any previously saved headers are replaced. 
+
+  /setBody:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+                  description: Whole body without any modification is saved and used.
+      responses:
+        '200':
+          description: OK
+      description: Body is stored per company, if present, CompanyId header will be used. This endpoint can be used for setting up the body, which will be used on root get endpoint (also all the paths which are not confired as valid endpoints will return configured values). Whole body which is send to this endpoint will be saved and used. Any previously saved body is replaced.
+  
+  /setStatusCode:
+    post:
+      parameters:
+        - name: statuscode
+          in: query
+          required: true
+          description:  Http response status code integer - 100-500
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+      description: Status code is stored per company, if present, CompanyId header will be used. This endpoint can be used for setting up the response status code, which will be used on root GET endpoint (also all the paths which are not confired as valid endpoints will return configured values). 
+      
+  /setHeadersAndBody:
+    post:
+      parameters:
+        - name: CustomHeader1
+          in: header
+          description:  Any number of headers which will be then returned on root endpoint
+          schema:
+            type: string
+        - name: CustomHeader2
+          in: header
+          description:  Any number of headers which will be then returned on root endpoint
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+                  description: Whole body without any modification is saved and used.
+      responses:
+        '200':
+          description: OK
+      description: Headers and body are stored per company, if present, CompanyId header will be used.This endpoint can be used for setting up the body and headers, which will be used on root GET endpoint (also all the paths which are not confired as valid endpoints will return configured values). Whole body which is send to this endpoint will be saved and used, and also all the headers. Any previously saved headers and body are replaced.
+      
+  /setEverything:
+    post:
+      parameters:
+        - name: CustomHeader1
+          in: header
+          description:  Any number of headers which will be then returned on root endpoint
+          schema:
+            type: string
+        - name: CustomHeader2
+          in: header
+          description:  Any number of headers which will be then returned on root endpoint
+          schema:
+            type: string
+
+        - name: statuscode
+          in: query
+          description:  Http response status code integer - 100-500 (just one header)
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+                  description: Whole body without any modification is saved and used.
+      responses:
+        '200':
+          description: OK
+      description: Headers and body are stored per company, if present, CompanyId header will be used.This endpoint can be used for setting up the body and headers, which will be used on root GET endpoint (also all the paths which are not confired as valid endpoints will return configured values). Whole body which is send to this endpoint will be saved and used, and also all the headers. Any previously saved headers and body are replaced.
+
+  /clear:
+    post:
+      responses:
+        '200':
+          description: OK
+      description: This endpoint will reset any previous setting of headers,body and status code for every company.
+
+  /reflect:
+    post:
+      parameters:
+        - name: CustomHeaders
+          in: header
+          description:  Any number of headers which will be then returned in response.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+                  description: Whole body without any modification will be returned in response.
+      responses:
+        '200':
+          description: Will return headers and body which it received.
+      description: This endpoint will respond with the headers and body which it receives.
+      
+  /bob/api/v1/service/instance/list:
+    get:
+      responses:
+        '200':
+          description: Will return static headers and body which are set up in the server compilation time.
+      description: This endpoint will all ways return predefined body (compile time defined).
+      
+  /bob/api/v1/service/definition/listVisible:
+    get:
+      responses:
+        '200':
+          description: Will return static headers and body which are set up in the server compilation time.
+      description: This endpoint will all ways return predefined body (compile time defined).
+      
