@@ -148,7 +148,7 @@ func reinitGlobalVariables() {
 }
 
 func main() {
-	port := ":8065"
+	port := ":80"
 	if len(os.Args) >= 2 {
 		port = os.Args[1]
 	}
