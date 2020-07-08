@@ -36,6 +36,11 @@ paths:
   /setHeaders:
     post:
       parameters:
+        - name: CompanyId
+          in: header
+          description:  CompanyId which will be used to pair headers with response to specific company, if not specified "0" will be used - "0" is the fallback for all responses
+          schema:
+            type: string
         - name: CustomHeader1
           in: header
           description:  Any number of headers which will be then returned on root endpoint
@@ -53,6 +58,12 @@ paths:
 
   /setBody:
     post:
+      parameters: 
+        - name: CompanyId
+          in: header
+          description:  CompanyId which will be used to pair body with response to specific company, if not specified "0" will be used - "0" is the fallback for all responses
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -70,6 +81,11 @@ paths:
   /setStatusCode:
     post:
       parameters:
+        - name: CompanyId
+          in: header
+          description:  CompanyId which will be used to pair statuscode with response to specific company, if not specified "0" will be used - "0" is the fallback for all responses
+          schema:
+            type: string
         - name: statuscode
           in: query
           required: true
@@ -84,6 +100,11 @@ paths:
   /setHeadersAndBody:
     post:
       parameters:
+        - name: CompanyId
+          in: header
+          description:  CompanyId which will be used to pair headers and body with response to specific company, if not specified "0" will be used - "0" is the fallback for all responses
+          schema:
+            type: string
         - name: CustomHeader1
           in: header
           description:  Any number of headers which will be then returned on root endpoint
@@ -111,6 +132,11 @@ paths:
   /setEverything:
     post:
       parameters:
+        - name: CompanyId
+          in: header
+          description:  CompanyId which will be used to pair headersm, body and statusCode with response to specific company, if not specified "0" will be used - "0" is the fallback for all responses
+          schema:
+            type: string
         - name: CustomHeader1
           in: header
           description:  Any number of headers which will be then returned on root endpoint
