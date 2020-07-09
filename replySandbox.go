@@ -22,7 +22,7 @@ func handleRequests(w http.ResponseWriter, req *http.Request) {
 			log.Printf("Customized response for company %s:", company)
 			log.Println("	Headers:")
 			for name, value := range headers {
-				//w.Header().Add(name, value)
+				w.Header().Add(name, value)
 				log.Printf("		%s, %s", name, value)
 			}
 
@@ -37,7 +37,7 @@ func handleRequests(w http.ResponseWriter, req *http.Request) {
 
 	// if company setting is not present, return default values present for company "0"
 	for name, value := range headersPerCompany["0"] {
-		//w.Header().Add(name, value)
+		w.Header().Add(name, value)
 		log.Printf("		%s, %s", name, value)
 	}
 
@@ -162,7 +162,7 @@ func main() {
 		port = os.Args[1]
 	}
 	reinitGlobalVariables()
-	log.Println("Server version: 0.04")
+	log.Println("Server version: 0.05")
 
 	http.HandleFunc("/", handleRequests)
 	http.HandleFunc("/setHeaders", setHeaders)

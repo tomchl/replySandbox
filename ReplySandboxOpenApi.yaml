@@ -169,6 +169,13 @@ paths:
 
   /clear:
     post:
+      parameters:
+        - name: CompanyId
+          in: header
+          required : true
+          description:  CompanyId which will be used to delete company specific setting, if not specified, all settings will be deleted
+          schema:
+            type: string
       responses:
         '200':
           description: OK
