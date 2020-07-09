@@ -25,6 +25,8 @@ paths:
                   body:
                     type: string
                     description: whole body can be configured, default value is empty body
+      description:
+        after the root element "/", there can be company id specified and the company setting for response will be used - "sandboxurl:port/100102/xxx/x/x" where 100102 is company id
 
     parameters:
       - name: Bearer
