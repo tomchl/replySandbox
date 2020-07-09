@@ -135,7 +135,14 @@ func reflectRequest(w http.ResponseWriter, req *http.Request) {
 }
 
 func clear(w http.ResponseWriter, req *http.Request) {
-	reinitGlobalVariables()
+	var companyID = req.Header.Get("companyid")
+	if companyID == "" {
+		reinitGlobalVariables()
+	} else {
+		headersPerCompany[companyID] = make(map[string]string)
+		bodyPerCompany[companyID] = ""
+		codePerCompany[companyID] = 200
+	}
 }
 
 func reinitGlobalVariables() {
