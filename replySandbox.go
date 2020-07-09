@@ -92,7 +92,7 @@ func setStatusCode(w http.ResponseWriter, req *http.Request) {
 	}
 
 	parsedInt, err := strconv.Atoi(req.FormValue("statuscode"))
-	if err == nil && (parsedInt > 200 && parsedInt < 500) {
+	if err == nil && (parsedInt >= 100 && parsedInt <= 599) {
 		codePerCompany[companyID] = parsedInt
 		log.Printf("		StatusCode for company %s : %d", companyID, codePerCompany[companyID])
 		return
