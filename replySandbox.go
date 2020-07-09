@@ -97,6 +97,7 @@ func setStatusCode(w http.ResponseWriter, req *http.Request) {
 		log.Printf("		StatusCode for company %s : %d", companyID, codePerCompany[companyID])
 		return
 	}
+	codePerCompany[companyID] = 200
 	log.Printf("		StatusCode for company %s not set - must be in range 200-500", companyID)
 }
 
