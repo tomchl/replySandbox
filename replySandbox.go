@@ -15,64 +15,64 @@ var bodyPerCompany = make(map[string]string)               // [company : body]
 var codePerCompany = make(map[string]int)                  // [company : intCode]
 
 func handleRequests(w http.ResponseWriter, req *http.Request) {
-	log.Println("Http reply with current headers and body")
+	companyIDFromURLPath := strings.Split(req.URL.Path, "/")[1]
+	log.Printf("Http reply with current headers and body for company %s", companyIDFromURLPath)
 
-	for company, headers := range headersPerCompany {
-		if strings.HasPrefix(req.URL.Path, "/"+company) {
-			log.Printf("Customized response for company %s:", company)
-			log.Println("	Headers:")
-			for name, value := range headers {
-				w.Header().Add(name, value)
-				log.Printf("		%s, %s", name, value)
-			}
-
-			log.Printf("	StatusCode: %d", codePerCompany[company])
-			w.WriteHeader(codePerCompany[company])
-
-			log.Printf("	Body: %s", bodyPerCompany[company])
-			w.Write([]byte(bodyPerCompany[company]))
-			return
-		}
+	headers, ok := headersPerCompany[companyIDFromURLPath]
+	if ok {
+		log.Printf("	Customized headers for company %s:", companyIDFromURLPath)
+	} else {
+		log.Println("	Default Headers:")
+		headers = headersPerCompany["0"]
 	}
 
-	// if company setting is not present, return default values present for company "0"
-	for name, value := range headersPerCompany["0"] {
+	for name, value := range headers {
 		w.Header().Add(name, value)
 		log.Printf("		%s, %s", name, value)
 	}
 
-	log.Printf("	StatusCode: %d", codePerCompany["0"])
-	w.WriteHeader(codePerCompany["0"])
+	if code, ok := codePerCompany[companyIDFromURLPath]; ok {
+		log.Printf("	Customized StatusCode for company %s: %d", companyIDFromURLPath, code)
+		w.WriteHeader(code)
+	} else {
+		log.Printf("	Default StatusCode returned: %d", codePerCompany["0"])
+		w.WriteHeader(codePerCompany["0"])
+	}
 
-	log.Printf("	Body: %s", bodyPerCompany["0"])
-	w.Write([]byte(bodyPerCompany["0"]))
+	if body, ok := bodyPerCompany[companyIDFromURLPath]; ok {
+		log.Printf("	Customized body for company %s: %s", companyIDFromURLPath, body)
+		w.Write([]byte(body))
+	} else {
+		log.Printf("	Default body returned: %s", bodyPerCompany["0"])
+		w.Write([]byte(bodyPerCompany["0"]))
+	}
 }
 
 func setHeaders(w http.ResponseWriter, req *http.Request) {
 	log.Println("SetHeaders:")
-	log.Println("	Headers:")
 	var newHeadersForCompany = make(map[string]string)
-	var companyID = "0"
+	var companyID = getCompanyIDFromHeader("setHeaders", w, req)
+	if companyID == "" {
+		return
+	}
+	log.Printf("	New headers set for companyId: %s", companyID)
 	for name, headers := range req.Header {
 		for _, h := range headers {
-			if strings.EqualFold("companyid", name) {
-				companyID = h
-			} else {
+			if !strings.EqualFold("companyid", name) {
 				newHeadersForCompany[name] = h
-				log.Printf("	%s : %s", name, h)
+				log.Printf("		%s : %s", name, h)
 			}
 		}
 	}
-	log.Printf("	headers set for companyId: %s", companyID)
 	headersPerCompany[companyID] = newHeadersForCompany
 }
 
 func setBody(w http.ResponseWriter, req *http.Request) {
 	log.Println("SetBody:")
 	log.Println("	Body:")
-	var companyID = req.Header.Get("companyid")
+	var companyID = getCompanyIDFromHeader("setBody", w, req)
 	if companyID == "" {
-		companyID = "0"
+		return
 	}
 	bodyBytes, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -86,9 +86,9 @@ func setBody(w http.ResponseWriter, req *http.Request) {
 func setStatusCode(w http.ResponseWriter, req *http.Request) {
 	log.Println("SetStatusCode:")
 
-	var companyID = req.Header.Get("companyid")
+	var companyID = getCompanyIDFromHeader("setStatusCode", w, req)
 	if companyID == "" {
-		companyID = "0"
+		return
 	}
 
 	parsedInt, err := strconv.Atoi(req.FormValue("statuscode"))
@@ -103,6 +103,10 @@ func setStatusCode(w http.ResponseWriter, req *http.Request) {
 
 func setHeadersAndBody(w http.ResponseWriter, req *http.Request) {
 	log.Println("Setting up headers and body")
+	var companyID = getCompanyIDFromHeader("setHeadersAndBody", w, req)
+	if companyID == "" {
+		return
+	}
 	setBody(w, req)
 	setHeaders(w, req)
 	log.Printf("Headers and body are set")
@@ -110,6 +114,10 @@ func setHeadersAndBody(w http.ResponseWriter, req *http.Request) {
 
 func setEverything(w http.ResponseWriter, req *http.Request) {
 	log.Println("Setting up headers, body and code")
+	var companyID = getCompanyIDFromHeader("setEverything", w, req)
+	if companyID == "" {
+		return
+	}
 	setBody(w, req)
 	setHeaders(w, req)
 	setStatusCode(w, req)
@@ -151,7 +159,7 @@ func reinitGlobalVariables() {
 	headersPerCompany["0"] = make(map[string]string)
 
 	bodyPerCompany = make(map[string]string) // [company : body]
-	bodyPerCompany["0"] = ""
+	bodyPerCompany["0"] = "default company, nothing to see there, use companyId in url as sandboxurl:port/<yourcompanyid>/anything"
 
 	codePerCompany = make(map[string]int) // [company : intCode]
 	codePerCompany["0"] = 200
@@ -163,7 +171,7 @@ func main() {
 		port = os.Args[1]
 	}
 	reinitGlobalVariables()
-	log.Println("Server version: 0.05")
+	log.Println("Server version: 0.06")
 
 	http.HandleFunc("/", handleRequests)
 	http.HandleFunc("/setHeaders", setHeaders)
@@ -222,4 +230,14 @@ func listVisible(w http.ResponseWriter, req *http.Request) {
 			}]}`
 	log.Printf("	Services returned: %s", body)
 	w.Write([]byte(body))
+}
+
+func getCompanyIDFromHeader(callerEndpoint string, w http.ResponseWriter, req *http.Request) string {
+	var companyID = req.Header.Get("companyid")
+	if companyID == "" {
+		log.Printf("	%s was called without company ID, returning error...", callerEndpoint)
+		w.WriteHeader(403)
+		w.Write([]byte(`Request was called without companyid header specified. Specify companyid header.`))
+	}
+	return companyID
 }

@@ -2,13 +2,21 @@ openapi: 3.0.1
 info:
   title: SaaS server mock
   description: >-
-    For more details and full context regarding SaaS server mock
+    For more details and full context regarding SaaS server mock. Mock can be configured to return custom headers, body and status code for specified company. Default company is 0. After headers/body/status code is set, server will return specified values on all endpoints.
     services, consult documentation at:
     https://confluence.quadient.group/display/PROD/PRODaaS+cloud+proxy+mock
   version: 14.4.202.0
 paths:
-  /:
+  /{companyId}:
     get:
+      parameters:
+        - in: path
+          name: companyId   # Note the name is the same as in the path
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+          description: CompanyId - specified response will be returned for the company. Without company specification it will return setting which is configured for company 0.   
       responses:
         '200':
           description: Default value is 200, but can be configured
@@ -25,8 +33,6 @@ paths:
                   body:
                     type: string
                     description: whole body can be configured, default value is empty body
-      description:
-        after the root element "/", there can be company id specified and the company setting for response will be used - "sandboxurl:port/100102/xxx/x/x" where 100102 is company id
 
     parameters:
       - name: Bearer
