@@ -17,6 +17,8 @@ var codePerCompany = make(map[string]int)                  // [company : intCode
 func handleRequests(w http.ResponseWriter, req *http.Request) {
 	companyIDFromURLPath := strings.Split(req.URL.Path, "/")[1]
 	log.Printf("Http reply with current headers and body for company %s", companyIDFromURLPath)
+	log.Printf("	Used endpoint: %s", req.URL.Path)
+	log.Println("	Returning following: ")
 
 	headers, ok := headersPerCompany[companyIDFromURLPath]
 	if ok {
