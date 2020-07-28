@@ -159,7 +159,7 @@ func reinitGlobalVariables() {
 	headersPerCompany["0"] = make(map[string]string)
 
 	bodyPerCompany = make(map[string]string) // [company : body]
-	bodyPerCompany["0"] = "default company, nothing to see there, use companyId in url as sandboxurl:port/<yourcompanyid>/anything"
+	bodyPerCompany["0"] = "default body, nothing to see there, use companyId in url as sandboxurl:port/<yourcompanyid>/anything or configure body with setBody, setHeadersAndBody or setEverything endpoint"
 
 	codePerCompany = make(map[string]int) // [company : intCode]
 	codePerCompany["0"] = 200
