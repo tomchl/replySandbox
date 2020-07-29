@@ -173,7 +173,7 @@ func main() {
 		port = os.Args[1]
 	}
 	reinitGlobalVariables()
-	log.Println("Server version: 0.06")
+	log.Println("Server version: 0.07")
 
 	http.HandleFunc("/", handleRequests)
 	http.HandleFunc("/setHeaders", setHeaders)
