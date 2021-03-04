@@ -207,6 +207,7 @@ func main() {
 
 	http.HandleFunc("/bob/api/v1/service/instance/list", instanceList)
 	http.HandleFunc("/bob/api/v1/service/definition/listVisible", listVisible)
+	http.HandleFunc("/api/v2/service/instance/listAllPerCompany", listAllPerCompany)
 
 	ch := make(chan error)
 	go func() {
@@ -251,6 +252,14 @@ func listVisible(w http.ResponseWriter, req *http.Request) {
 				"CurrentState": "Running",
 				"DesiredState": "Running"
 			}]}`
+	log.Printf("	Services returned: %s", body)
+	w.Write([]byte(body))
+}
+
+func listAllPerCompany(w http.ResponseWriter, req *http.Request) {
+	log.Println("Received request on /api/v2/service/instance/listAllPerCompany")
+
+	body := `[]`
 	log.Printf("	Services returned: %s", body)
 	w.Write([]byte(body))
 }
