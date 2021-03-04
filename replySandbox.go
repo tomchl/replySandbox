@@ -207,7 +207,7 @@ func main() {
 
 	http.HandleFunc("/bob/api/v1/service/instance/list", instanceList)
 	http.HandleFunc("/bob/api/v1/service/definition/listVisible", listVisible)
-	http.HandleFunc("/api/v2/service/instance/listAllPerCompany", listAllPerCompany)
+	http.HandleFunc("/bob/api/v2/service/instance/listAllPerCompany", listAllPerCompany)
 
 	ch := make(chan error)
 	go func() {
