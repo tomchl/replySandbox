@@ -252,22 +252,28 @@ To receive proper response, configure mockServer with "/setEverything" endpoint 
 use companyId header with desired companyId as value and request body in following format:
 
 {
-  "body":{
-	  "/endpoint/To/Mock/1":{jsonBody},
-	  "/endpoint/To/Mock/2":{jsonBody}
-  },
-  "headers":{
-	  "/bob/api/v1/metrics/database/storage":{
-		  "Header1" : "Header1Value",
-		  "Header2" : "Header2Value"
-	  },
-	  "endpointToMock2":{
-		  "Header11" : "Header11Value",
-		  "Header22" : "Header22Value"
-	  },
-  },
-  "statusCode":{
-	  "/endpoint/To/Mock/1":200,
-	  "/endpoint/To/Mock/2":403
- }
+    "body":{
+        "/bob/api/v2/changesetPromotion/package/list":{"changesets":[{
+            "Id":"nejakejChangeSetID",
+            "SourceCompanyId":2000000
+        }]},
+        "/bob/api/v2/changesetPromotion/icmPackage" :{"changesets": [{
+            "Id" : "icmId",
+            "LastUpdate" : "2017-09-08T19:01:55.714942+03:00"
+        }]}
+    },
+    "headers":{
+        "/bob/api/v2/changesetPromotion/package/list":{
+            "header1" : "h1",
+            "header2" : "h2"
+        },
+        "/api/v2/changesetPromotion/icmPackage":{
+            "header1" : "h1",
+            "header2" : "h2"
+        }
+    },
+    "statusCode":{
+        "/bob/api/v2/changesetPromotion/package/list":200,
+        "/api/v2/changesetPromotion/icmPackage":200
+   }
 }`
