@@ -92,7 +92,6 @@ func setStatusCode(companyID string, jsonBody map[string]interface{}) {
 				codePerCompany[companyID][key] = int(r)
 			}
 		}
-
 	}
 }
 
@@ -148,13 +147,15 @@ func setEverything(w http.ResponseWriter, req *http.Request) {
 }
 
 func clear(w http.ResponseWriter, req *http.Request) {
-	var companyID = req.Header.Get("companyid")
-	if companyID == "" {
+	var companyID = req.Header.Get("companyId")
+	if len(companyID) < 1 {
+		log.Printf("Clearing all setting")
 		reinitGlobalVariables()
 	} else {
+		log.Printf("Clearing setting for company %s", companyID)
 		headersPerCompany[companyID] = make(map[string]map[string]string)
-		bodyPerCompany[companyID]["/"] = ""
-		codePerCompany[companyID]["/"] = 200
+		bodyPerCompany[companyID] = make(map[string]string)
+		codePerCompany[companyID] = make(map[string]int)
 	}
 }
 
