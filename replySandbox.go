@@ -143,7 +143,7 @@ func setEverything(w http.ResponseWriter, req *http.Request) {
 	setBody(companyID, jsonBody)
 	setStatusCode(companyID, jsonBody)
 
-	log.Printf("SetEverything done for CompanyId: %s", companyID)
+	log.Printf("SetEverything done for CompanyId %s", companyID)
 }
 
 func clear(w http.ResponseWriter, req *http.Request) {
@@ -249,31 +249,31 @@ var listVisibleStaticBody = `{"ServicesDefinitions": [{
 
 var defaultJsonBodyForSetEverythingRequest = `[Default]
 To receive proper response, configure mockServer with "/setEverything" endpoint and 
-use companyId header with desired companyId as value and request body in following format:
+use companyId header with desired companyId as value and request body in following valid json format:
 
 {
     "body":{
-        "/bob/api/v2/changesetPromotion/package/list":{"changesets":[{
-            "Id":"nejakejChangeSetID",
-            "SourceCompanyId":2000000
+        "/endpoint/to/mock/1":{"exampleNode":[{
+            "exampleNode":"exampleNode",
+            "exampleNode":100
         }]},
-        "/bob/api/v2/changesetPromotion/icmPackage" :{"changesets": [{
-            "Id" : "icmId",
-            "LastUpdate" : "2017-09-08T19:01:55.714942+03:00"
+        "/endpoint/to/mock/2" :{"exampleNode": [{
+            "exampleNode" : "exampleNode",
+            "exampleNode" : "2017-09-08T19:01:55.714942+03:00"
         }]}
     },
     "headers":{
-        "/bob/api/v2/changesetPromotion/package/list":{
-            "header1" : "h1",
-            "header2" : "h2"
+        "/endpoint/to/mock/1":{
+            "ExampleHeader1" : "ExampleHeaderValue1",
+            "ExampleHeader2" : "ExampleHeaderValue2"
         },
-        "/api/v2/changesetPromotion/icmPackage":{
-            "header1" : "h1",
-            "header2" : "h2"
+        "/endpoint/to/mock/2":{
+            "ExampleHeader1" : "ExampleHeaderValue1",
+            "ExampleHeader2" : "ExampleHeaderValue2"
         }
     },
     "statusCode":{
-        "/bob/api/v2/changesetPromotion/package/list":200,
-        "/api/v2/changesetPromotion/icmPackage":200
+        "/endpoint/to/mock/1":200,
+        "/endpoint/to/mock/2":403
    }
 }`
