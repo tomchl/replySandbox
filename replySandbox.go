@@ -3,12 +3,11 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"strconv"
 )
 
@@ -16,51 +15,73 @@ var headersPerCompany = make(map[string]map[string]map[string]string) // [compan
 var bodyPerCompany = make(map[string]map[string]string)               // [company : [path : body]]
 var codePerCompany = make(map[string]map[string]int)                  // [company : [path : intCode]]
 
+func main() {
+	port := ":80"
+	if len(os.Args) >= 2 {
+		port = os.Args[1]
+	}
+	reinitGlobalVariables()
+	log.Println("Server version: 0.08")
+
+	http.HandleFunc("/", handleRequests)
+	http.HandleFunc("/setEverything", setEverything)
+	http.HandleFunc("/clear", clear)
+
+	// static responses - same for each company
+	http.HandleFunc("/bob/api/v1/service/instance/list", instanceList)
+	http.HandleFunc("/bob/api/v2/service/instance/list", instanceList)
+
+	http.HandleFunc("/bob/api/v1/service/definition/listVisible", listVisible)
+	http.HandleFunc("/bob/api/v2/service/definition/listVisible", listVisible)
+	
+	http.HandleFunc("/bob/api/v2/service/instance/listAllPerCompany", listAllPerCompany)
+
+	ch := make(chan error)
+	go func() {
+		ch <- http.ListenAndServe(port, nil)
+	}()
+
+	log.Printf("Customizable response server is listening on %s", port)
+	log.Fatal(<-ch)
+}
+
 func handleRequests(w http.ResponseWriter, req *http.Request) {
-	companyIDFromURLPath := req.Header.Get("companyId")
+	companyIDFromURLPath := getCompanyID(req)
 	path := req.RequestURI
-	log.Printf("Http reply with current headers and body for company %s", companyIDFromURLPath)
-	log.Printf("	Used endpoint: %s", path)
-	log.Println("	Returning following: ")
+
+	log.Printf("CompanyId : %s  Endpoint: %s - Returning following response", companyIDFromURLPath, path)
 
 	headers, ok := headersPerCompany[companyIDFromURLPath][path]
 	if ok {
-		log.Printf("	Customized headers for company %s:", companyIDFromURLPath)
+		log.Printf("	Company specific headers")
 	} else {
-		log.Println("	Default Headers:")
+		log.Println("	Default Headers")
 		headers = headersPerCompany["0"]["/"]
 	}
 
 	for name, value := range headers {
 		w.Header().Add(name, value)
-		log.Printf("		%s, %s", name, value)
 	}
 
 	if code, ok := codePerCompany[companyIDFromURLPath][path]; ok {
-		log.Printf("	Customized StatusCode for company %s: %d", companyIDFromURLPath, code)
+		log.Printf("	Company specific StatusCode: %d", code)
 		w.WriteHeader(code)
 	} else {
-		log.Printf("	Default StatusCode returned: %d", codePerCompany["0"]["/"])
+		log.Printf("	Default StatusCode: %d", codePerCompany["0"]["/"])
 		w.WriteHeader(codePerCompany["0"]["/"])
 	}
 
 	if body, ok := bodyPerCompany[companyIDFromURLPath][path]; ok {
-		log.Printf("	Customized body for company %s: %s", companyIDFromURLPath, body)
+		log.Printf("	Company specific body")
 		w.Write([]byte(body))
 	} else {
-		log.Printf("	Default body returned: %s", bodyPerCompany["0"]["/"])
+		log.Printf("	Default body returned")
 		w.Write([]byte(bodyPerCompany["0"]["/"]))
 	}
 }
 
-func setStatusCode(w http.ResponseWriter, req *http.Request) {
-	companyID, jsonResult, e := getCompanyIdAndBody(w, req)
-	if e != nil {
-		log.Fatal(e)
-		return
-	}
-
-	value, ok := jsonResult["statusCode"]
+func setStatusCode(companyID string, jsonBody map[string]interface{}) {
+	value, ok := jsonBody["statusCode"]
 	if res, okk := value.(map[string]interface{}); ok && okk {
 		for key, val := range res {
 
@@ -75,14 +96,8 @@ func setStatusCode(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func setHeaders(w http.ResponseWriter, req *http.Request) {
-	companyID, jsonResult, e := getCompanyIdAndBody(w, req)
-	if e != nil {
-		log.Fatal(e)
-		return
-	}
-
-	value, ok := jsonResult["headers"]
+func setHeaders(companyID string, jsonBody map[string]interface{}) {
+	value, ok := jsonBody["headers"]
 	if res, okk := value.(map[string]interface{}); ok && okk {
 		for key, val := range res {
 
@@ -100,18 +115,11 @@ func setHeaders(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 		}
-
 	}
 }
 
-func setBody(w http.ResponseWriter, req *http.Request) {
-	companyID, jsonResult, e := getCompanyIdAndBody(w, req)
-	if e != nil {
-		log.Fatal(e)
-		return
-	}
-
-	value, ok := jsonResult["body"]
+func setBody(companyID string, jsonBody map[string]interface{}) {
+	value, ok := jsonBody["body"]
 	if res, okk := value.(map[string]interface{}); ok && okk {
 		for key, val := range res {
 			if r, err := json.Marshal(val); err == nil {
@@ -124,44 +132,19 @@ func setBody(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func setHeadersAndBody(w http.ResponseWriter, req *http.Request) {
-	log.Println("Setting up headers and body")
-	var companyID = getCompanyIDFromHeader("setHeadersAndBody", w, req)
-	if companyID == "" {
+func setEverything(w http.ResponseWriter, req *http.Request) {
+	var companyID = getCompanyIDFromHeader(req)
+	jsonBody, e := getJsonBody(req)
+	if e != nil {
+		log.Fatal(e)
 		return
 	}
-	setBody(w, req)
-	setHeaders(w, req)
-	log.Printf("Headers and body are set")
-}
 
-func setEverything(w http.ResponseWriter, req *http.Request) {
-	log.Println("Setting up headers, body and code")
+	setHeaders(companyID, jsonBody)
+	setBody(companyID, jsonBody)
+	setStatusCode(companyID, jsonBody)
 
-	setHeaders(w, req)
-	setBody(w, req)
-	setStatusCode(w, req)
-
-	log.Printf("Headers, body and code are set")
-}
-
-func reflectRequest(w http.ResponseWriter, req *http.Request) {
-	log.Println("Request for reflection received")
-	for name, headers := range req.Header {
-		for _, h := range headers {
-			w.Header().Add(name, h)
-		}
-	}
-
-	parsedInt, atoiErr := strconv.Atoi(req.FormValue("statuscode"))
-	if atoiErr == nil {
-		w.WriteHeader(parsedInt)
-	}
-
-	_, err := io.Copy(w, req.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("SetEverything done for CompanyId: %s", companyID)
 }
 
 func clear(w http.ResponseWriter, req *http.Request) {
@@ -181,116 +164,109 @@ func reinitGlobalVariables() {
 
 	bodyPerCompany = make(map[string]map[string]string) // [company : body]
 	bodyPerCompany["0"] = make(map[string]string)
-	bodyPerCompany["0"]["/"] = "default body, use companyId in url as sandboxurl:port/<yourcompanyid>/anything or configure body with setBody, setHeadersAndBody or setEverything endpoint"
+	bodyPerCompany["0"]["/"] = defaultJsonBodyForSetEverythingRequest
 
 	codePerCompany = make(map[string]map[string]int) // [company : intCode]
 	codePerCompany["0"] = make(map[string]int)
 	codePerCompany["0"]["/"] = 200
 }
 
-func main() {
-	port := ":80"
-	if len(os.Args) >= 2 {
-		port = os.Args[1]
-	}
-	reinitGlobalVariables()
-	log.Println("Server version: 0.07")
-
-	http.HandleFunc("/", handleRequests)
-	http.HandleFunc("/setHeaders", setHeaders)
-	http.HandleFunc("/setBody", setBody)
-	http.HandleFunc("/setStatusCode", setStatusCode)
-	http.HandleFunc("/setHeadersAndBody", setHeadersAndBody)
-	http.HandleFunc("/setEverything", setEverything)
-	http.HandleFunc("/reflect", reflectRequest)
-	http.HandleFunc("/clear", clear)
-
-	http.HandleFunc("/bob/api/v1/service/instance/list", instanceList)
-	http.HandleFunc("/bob/api/v2/service/instance/list", instanceList)
-
-	http.HandleFunc("/bob/api/v1/service/definition/listVisible", listVisible)
-	http.HandleFunc("/bob/api/v2/service/definition/listVisible", listVisible)
-	
-	http.HandleFunc("/bob/api/v2/service/instance/listAllPerCompany", listAllPerCompany)
-
-	ch := make(chan error)
-	go func() {
-		ch <- http.ListenAndServe(port, nil)
-	}()
-
-	log.Printf("Customizable response server is listening on %s", port)
-	log.Fatal(<-ch)
-}
-
-// static responses - same for each company
-func instanceList(w http.ResponseWriter, req *http.Request) {
-	log.Println("Received request on /api/v1/service/instance/list")
-
-	body := `{"Services": [{
-				"Id": "1",
-				"CompanyId": "1",
-				"Name": "DummyName",
-				"Definition": {
-					"Name": "DummyName",
-					"Version": "1",
-					"Description": "BlahBlah",
-					"CurrentState": "Running",
-					"DesiredState": "Running"
-				},
-				"User": "Dummy",
-				"Details": {
-					"Endpoints": []
-					}
-				}]}`
-	log.Printf("	Services returned: %s", body)
-	w.Write([]byte(body))
-}
-
-func listVisible(w http.ResponseWriter, req *http.Request) {
-	log.Println("Received request on /api/v1/service/definition/listVisible")
-
-	body := `{"ServicesDefinitions": [{
-				"Name": "DummyName",
-				"Version": "1",
-				"Description": "BlahBlah",
-				"CurrentState": "Running",
-				"DesiredState": "Running"
-			}]}`
-	log.Printf("	Services returned: %s", body)
-	w.Write([]byte(body))
-}
-
-func listAllPerCompany(w http.ResponseWriter, req *http.Request) {
-	log.Println("Received request on /api/v2/service/instance/listAllPerCompany")
-
-	body := `[]`
-	log.Printf("	Services returned: %s", body)
-	w.Write([]byte(body))
-}
-
-func getCompanyIDFromHeader(callerEndpoint string, w http.ResponseWriter, req *http.Request) string {
+func getCompanyIDFromHeader(req *http.Request) string {
 	var companyID = req.Header.Get("companyid")
-	if companyID == "" {
-		log.Printf("	%s was called without company ID, returning error...", callerEndpoint)
-		w.WriteHeader(403)
-		w.Write([]byte(`Request was called without companyid header specified. Specify companyid header.`))
+	if len(companyID) < 1 {
+		companyID = "0"
 	}
+
 	return companyID
 }
 
-func getCompanyIdAndBody(w http.ResponseWriter, req *http.Request) (string, map[string]interface{}, error) {
-	var companyID = getCompanyIDFromHeader("setEverything", w, req)
-	if companyID == "" {
-		return "", nil, errors.New("Couldnt parse companyId")
+func getCompanyID(req *http.Request) string {
+	companyID := req.Header.Get("companyId")
+	if len(companyID) < 1 {
+		companyID = strings.Split(req.URL.Path, "/")[1]
+		if _, err := strconv.ParseInt(companyID,10,64); err != nil {
+			companyID = "0"
+		}
 	}
+	
+	return companyID
+}
 
+func getJsonBody(req *http.Request) (map[string]interface{}, error) {
 	var jsonResult map[string]interface{}
 	body, e := ioutil.ReadAll(req.Body)
 	req.Body = ioutil.NopCloser(bytes.NewReader(body))
 	if e != nil {
-		return "", nil, e
+		return nil, e
 	}
 	json.Unmarshal(body, &jsonResult)
 
-	return companyID, jsonResult, nil
+	return jsonResult, nil
 }
+
+// static responses - same for each company
+func instanceList(w http.ResponseWriter, req *http.Request) {
+	w.Write([]byte(instancesListsStaticBody))
+	log.Println("Received request on /api/v1/service/instance/list - static services list returned")
+}
+
+func listVisible(w http.ResponseWriter, req *http.Request) {
+	w.Write([]byte(listVisibleStaticBody))
+	log.Println("Received request on /api/v1/service/definition/listVisible - static services listVisible returned")
+}
+
+func listAllPerCompany(w http.ResponseWriter, req *http.Request) {
+	body := `[]`
+	w.Write([]byte(body))
+	log.Println("Received request on /api/v2/service/instance/listAllPerCompany - empty list returned")
+}
+
+var instancesListsStaticBody = `{"Services": [{
+	"Id": "1",
+	"CompanyId": "1",
+	"Name": "DummyName",
+	"Definition": {
+		"Name": "DummyName",
+		"Version": "1",
+		"Description": "BlahBlah",
+		"CurrentState": "Running",
+		"DesiredState": "Running"
+	},
+	"User": "Dummy",
+	"Details": {
+		"Endpoints": []
+		}
+	}]}`
+
+var listVisibleStaticBody = `{"ServicesDefinitions": [{
+		"Name": "DummyName",
+		"Version": "1",
+		"Description": "BlahBlah",
+		"CurrentState": "Running",
+		"DesiredState": "Running"
+	}]}`
+
+var defaultJsonBodyForSetEverythingRequest = `[Default]
+To receive proper response, configure mockServer with "/setEverything" endpoint and 
+use companyId header with desired companyId as value and request body in following format:
+
+{
+  "body":{
+	  "/endpoint/To/Mock/1":{jsonBody},
+	  "/endpoint/To/Mock/2":{jsonBody}
+  },
+  "headers":{
+	  "/bob/api/v1/metrics/database/storage":{
+		  "Header1" : "Header1Value",
+		  "Header2" : "Header2Value"
+	  },
+	  "endpointToMock2":{
+		  "Header11" : "Header11Value",
+		  "Header22" : "Header22Value"
+	  },
+  },
+  "statusCode":{
+	  "/endpoint/To/Mock/1":200,
+	  "/endpoint/To/Mock/2":403
+ }
+}`
