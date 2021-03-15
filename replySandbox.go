@@ -206,11 +206,20 @@ func getJsonBody(req *http.Request) (map[string]interface{}, error) {
 	return jsonResult, nil
 }
 
+type BodyWithCompanyId struct {
+	CompanyID int
+}
+
 // static responses - same for each company
 func instanceList(w http.ResponseWriter, req *http.Request) {
-	var companyID = getCompanyIDFromHeader(req)
+    decoder := json.NewDecoder(req.Body)
+    var t BodyWithCompanyId
+    err := decoder.Decode(&t)
+    if err != nil {
+        panic(err)
+    }
 
-	w.Write([]byte(fmt.Sprintf(instancesListStaticBody, companyID)))
+	w.Write([]byte(fmt.Sprintf(instancesListStaticBody, t.CompanyID)))
 	log.Println("Received request on /api/v1/service/instance/list - static services list returned")
 }
 
@@ -227,7 +236,7 @@ func listAllPerCompany(w http.ResponseWriter, req *http.Request) {
 
 var instancesListStaticBody = `{"Services": [{
 	"Id": "1",
-	"CompanyId": "%s",
+	"CompanyId": %d,
 	"Name": "DummyName",
 	"Definition": {
 		"Name": "DummyName",
