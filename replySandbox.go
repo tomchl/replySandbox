@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"strconv"
+	"fmt"
 )
 
 var headersPerCompany = make(map[string]map[string]map[string]string) // [company : [path : [header : value]]
@@ -207,7 +208,9 @@ func getJsonBody(req *http.Request) (map[string]interface{}, error) {
 
 // static responses - same for each company
 func instanceList(w http.ResponseWriter, req *http.Request) {
-	w.Write([]byte(instancesListsStaticBody))
+	var companyID = getCompanyIDFromHeader(req)
+
+	w.Write([]byte(fmt.Sprintf(instancesListStaticBody, companyID)))
 	log.Println("Received request on /api/v1/service/instance/list - static services list returned")
 }
 
@@ -222,9 +225,9 @@ func listAllPerCompany(w http.ResponseWriter, req *http.Request) {
 	log.Println("Received request on /api/v2/service/instance/listAllPerCompany - empty list returned")
 }
 
-var instancesListsStaticBody = `{"Services": [{
+var instancesListStaticBody = `{"Services": [{
 	"Id": "1",
-	"CompanyId": "1",
+	"CompanyId": "%s",
 	"Name": "DummyName",
 	"Definition": {
 		"Name": "DummyName",
