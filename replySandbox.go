@@ -220,7 +220,7 @@ func instanceList(w http.ResponseWriter, req *http.Request) {
     }
 
 	w.Write([]byte(fmt.Sprintf(instancesListStaticBody, bodyWHeader.CompanyID)))
-	log.Println("Received request on /api/v1/service/instance/list - static services list returned")
+	log.Println(fmt.Sprintf("Received request on /api/v1/service/instance/list - static services list returned for companyId %d", bodyWHeader.CompanyID))
 }
 
 func listVisible(w http.ResponseWriter, req *http.Request) {
