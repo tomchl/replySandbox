@@ -22,7 +22,7 @@ func main() {
 		port = os.Args[1]
 	}
 	reinitGlobalVariables()
-	log.Println("Server version: 0.08")
+	log.Println("Server version: 0.09")
 
 	http.HandleFunc("/", handleRequests)
 	http.HandleFunc("/setEverything", setEverything)
@@ -213,13 +213,13 @@ type BodyWithCompanyId struct {
 // static responses - same for each company
 func instanceList(w http.ResponseWriter, req *http.Request) {
     decoder := json.NewDecoder(req.Body)
-    var t BodyWithCompanyId
-    err := decoder.Decode(&t)
+    var bodyWHeader BodyWithCompanyId
+    err := decoder.Decode(&bodyWHeader)
     if err != nil {
-        panic(err)
+        bodyWHeader.CompanyID = 0
     }
 
-	w.Write([]byte(fmt.Sprintf(instancesListStaticBody, t.CompanyID)))
+	w.Write([]byte(fmt.Sprintf(instancesListStaticBody, bodyWHeader.CompanyID)))
 	log.Println("Received request on /api/v1/service/instance/list - static services list returned")
 }
 
