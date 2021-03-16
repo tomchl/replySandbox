@@ -244,9 +244,9 @@ var instancesListStaticBody = `{"Services": [{
 		"Name": "DummyName",
 		"Version": "1",
 		"Description": "BlahBlah",
-		"CurrentState": "Running",
-		"DesiredState": "Running"
 	},
+	"CurrentState": "Running",
+	"DesiredState": "Running",
 	"User": "Dummy",
 	"Details": {
 		"Endpoints": []
