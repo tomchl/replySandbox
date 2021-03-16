@@ -216,7 +216,7 @@ func instanceList(w http.ResponseWriter, req *http.Request) {
     var bodyWHeader BodyWithCompanyId
     err := decoder.Decode(&bodyWHeader)
     if err != nil {
-        bodyWHeader.CompanyID = 0
+        bodyWHeader.CompanyID = 01
     }
 
 	w.Write([]byte(fmt.Sprintf(instancesListStaticBody, bodyWHeader.CompanyID)))
@@ -239,6 +239,8 @@ var instancesListStaticBody = `{"Services": [{
 	"CompanyId": %d,
 	"Name": "DummyName",
 	"Definition": {
+		"Id": 1,
+		"Type": "PRODAAS",
 		"Name": "DummyName",
 		"Version": "1",
 		"Description": "BlahBlah",
