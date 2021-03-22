@@ -22,7 +22,7 @@ func main() {
 		port = os.Args[1]
 	}
 	reinitGlobalVariables()
-	log.Println("Server version: 0.09")
+	log.Println("Server version: 0.10")
 
 	http.HandleFunc("/", handleRequests)
 	http.HandleFunc("/setEverything", setEverything)
